@@ -10,16 +10,32 @@ import java.io.Serializable;
  *
  * @author catac
  */
-public class Message implements Serializable{
+public class Message implements Serializable {
+    public enum Tipo {
+        // Subastas
+        NUEVA_SUBASTA, NUEVA_OFERTA, OFERTA_ACEPTADA, SUBASTA_CERRADA,
+        SUBASTA_CANCELADA, UNIRSE_SUBASTA, FELICITACION,
+        // Red Social
+        NUEVO_POST, NUEVO_SEGUIDOR, SUBIDA_NIVEL, LIKES_MILESTONE,
+        // General
+        CONECTAR, DESCONECTAR, ERROR
+    }
+    
     public String emisor;
     public String receptor;
     public String mensaje;
-
-    public Message(String emisor, String receptor, String mensaje) {
+    public Tipo tipo;
+    public String datos; 
+    
+    public Message(String emisor, String receptor, String mensaje, Tipo tipo) {
         this.emisor = emisor;
         this.receptor = receptor;
         this.mensaje = mensaje;
+        this.tipo = tipo;
     }
     
-    
+    public Message(String emisor, String receptor, String mensaje, Tipo tipo, String datos) {
+        this(emisor, receptor, mensaje, tipo);
+        this.datos = datos;
+    }
 }
