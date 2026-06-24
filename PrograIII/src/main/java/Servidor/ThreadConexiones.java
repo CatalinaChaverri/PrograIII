@@ -23,20 +23,22 @@ public class ThreadConexiones extends Thread{
     
     
     public void run(){
-        servidor.serverForm.escribirMensaje("Ahora escuchando conexiones \n");
-        while(isRunning){
+        servidor.serverForm.escribirMensaje("Ahora escuchando conexiones \n" );
+        while (isRunning){
             try {
-                //TODO
                 //se queda esperando que alguien en la red se conecte a la IP y port
-                //cuando alguien se conecta obtiene el socket y crea la conexión
+                //cuando alguien se conecta obtiene el socket y crea la conexion
                 //en el server con el cliente
                 Socket socketCliente = servidor.serverSocket.accept();
                 servidor.serverForm.escribirMensaje("Conexión recibida: #" + (++counter) + "\n");
+                //crear todo el threadServidor
+                ThreadServidor newClient = new ThreadServidor(servidor, socketCliente);
+                servidor.connectClientsThreads.add(newClient);
+                newClient.start();
+                servidor.serverForm.escribirMensaje("Cliente agregado al arreglo\n");
             } catch (IOException ex) {
-                servidor.serverForm.escribirMensaje("Error en accept: #" + ex.getMessage() + "\n");
-
+                servidor.serverForm.escribirMensaje("Error en accept: " + ex.getMessage() + "\n");
             }
-            
         }
     }
 }

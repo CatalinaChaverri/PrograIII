@@ -4,8 +4,10 @@
  */
 package Servidor;
 
+import Modelos.Message;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 
 /**
  *
@@ -18,20 +20,46 @@ public class Servidor {
     ThreadConexiones threadConexiones;
     //TODO
     //arrayList de clientes conectados: ThreadServidor
+    ArrayList<ThreadServidor> connectClientsThreads = new ArrayList<ThreadServidor>();
     
     public Servidor(ServerForm serverForm){
         this.serverForm = serverForm;
         this.connect();
-        this.threadConexiones = new ThreadConexiones(this);
-        this.threadConexiones.start();
+        this.threadConexiones =  new ThreadConexiones(this);
+        
     }
     
     private void connect(){
         try {
             serverSocket = new ServerSocket(PORT);
-            serverForm.escribirMensaje("Servidor escuchando puerto: "+ PORT);
+            serverForm.escribirMensaje("Servidor escuchando puerto: " + PORT);
         } catch (IOException ex) {
             serverForm.escribirMensaje("Error levantando el server: "+ex.getMessage());
+        }
+    }
+    
+    public void broadcast(Message msg){
+        
+        for (ThreadServidor client : connectClientsThreads) {
+            try {
+                client.getWriterStream().writeObject(msg);
+            } catch (IOException ex) {
+                serverForm.escribirMensaje("Error levantando el server: "+ex.getMessage());
+            }
+        }
+    }
+    
+    public void sendPrivateMessage(Message msg){
+        
+        for (ThreadServidor client : connectClientsThreads) {
+            try {
+                if (msg.receptor.equals(client.getNombre())){
+                    client.getWriterStream().writeObject(msg);
+                    break;
+                }
+            } catch (IOException ex) {
+                serverForm.escribirMensaje("Error levantando el server: "+ex.getMessage());
+            }
         }
     }
 }
