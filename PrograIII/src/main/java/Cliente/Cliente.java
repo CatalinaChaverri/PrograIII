@@ -5,7 +5,6 @@
 package Cliente;
 
 import APIComunicacion.MessageListener;
-import APIComunicacion.Observer;
 import Modelos.Message;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -23,16 +22,16 @@ public class Cliente {
     ClientForm pantalla;
     ThreadCliente threadCliente;
     private ObjectOutputStream writerStream;
-    private Observer listener;
+    private MessageListener listener;
     int counter = 0;
     
 
-//    public Cliente(ClientForm pantalla) {
-//        this.pantalla = pantalla;
-//        this.connect();
-//    }
+    public Cliente(ClientForm pantalla) {
+        this.pantalla = pantalla;
+        this.connect();
+    }
     
-    public Cliente(String nombre, Observer listener) {
+    public Cliente(String nombre, MessageListener listener) {
         this.nombre = nombre;
         this.listener = listener;
         this.connect();
@@ -71,8 +70,9 @@ public class Cliente {
     
     public void recibirMensaje(Message msg) {
         if (listener != null) {
-            listener.update(msg);
+            listener.onMessage(msg);
         }
     }
+    
     
 }

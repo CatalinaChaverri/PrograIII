@@ -15,12 +15,6 @@ import javax.swing.SwingUtilities;
 public class PrograIII {
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            if (args.length > 0 && "server".equalsIgnoreCase(args[0])) {
-                new ServerForm().setVisible(true);
-            } else {
-                new LoginForm().setVisible(true);
-            }
-        });
+        SwingUtilities.invokeLater(() -> {new LoginForm().setVisible(true);});
     }
 }
