@@ -17,8 +17,9 @@ public class Message implements Serializable {
         SUBASTA_CANCELADA, UNIRSE_SUBASTA, FELICITACION,
         // Red Social
         NUEVO_POST, NUEVO_SEGUIDOR, SUBIDA_NIVEL, LIKES_MILESTONE,
+        LIKE_POST, DISLIKE_POST, ARTISTA_BAJA,
         // General
-        CONECTAR, DESCONECTAR, ERROR
+        CONECTAR, DESCONECTAR, REGISTRAR, SUSCRIBIR, ERROR
     }
     
     public String emisor;

@@ -5,6 +5,23 @@
 package Servidor;
 
 import Modelos.Message;
+import static Modelos.Message.Tipo.ARTISTA_BAJA;
+import static Modelos.Message.Tipo.DESCONECTAR;
+import static Modelos.Message.Tipo.DISLIKE_POST;
+import static Modelos.Message.Tipo.FELICITACION;
+import static Modelos.Message.Tipo.LIKES_MILESTONE;
+import static Modelos.Message.Tipo.LIKE_POST;
+import static Modelos.Message.Tipo.NUEVA_OFERTA;
+import static Modelos.Message.Tipo.NUEVA_SUBASTA;
+import static Modelos.Message.Tipo.NUEVO_POST;
+import static Modelos.Message.Tipo.NUEVO_SEGUIDOR;
+import static Modelos.Message.Tipo.OFERTA_ACEPTADA;
+import static Modelos.Message.Tipo.REGISTRAR;
+import static Modelos.Message.Tipo.SUBASTA_CANCELADA;
+import static Modelos.Message.Tipo.SUBASTA_CERRADA;
+import static Modelos.Message.Tipo.SUBIDA_NIVEL;
+import static Modelos.Message.Tipo.SUSCRIBIR;
+import static Modelos.Message.Tipo.UNIRSE_SUBASTA;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -38,35 +55,68 @@ public class ThreadServidor extends Thread{
         }
     }
     
-    public void run(){
-        Message mensajeRecibido;
-        while(isRunning){
+    @Override
+    public void run() {
+        while (isRunning) {
             try {
-                mensajeRecibido = (Message)readerStream.readObject();
-                servidor.serverForm.escribirMensaje("Msj de client: " +
-                        mensajeRecibido + "\n" );
-//                if (mensajeRecibido.tipo.equals("Name")){
-//                    this.nombre = mensajeRecibido.mensaje;
-//                    writerStream.writeObject(new Message("NameConfirmation", "Servidor", nombre, "Tu TS recibió tu nombre"));
-//                }else if (mensajeRecibido.tipo.equals("Broadcast")){
-//                    servidor.broadcast(mensajeRecibido);
-//                }else if (mensajeRecibido.tipo.equals("Private")){
-//                    servidor.sendPrivateMessage(mensajeRecibido);
-//                }else if (mensajeRecibido.tipo.equals("Disparo")){
-//                    servidor.sendPrivateMessage(mensajeRecibido);
-//                }
-                
-                //TODO: procesar el mensaje recibido
-                // if tipo == ... then haga x
-                //broadcast: repartir el mensaje a todos
-                //mensaje individual
-                
+                Message mensajeRecibido = (Message) readerStream.readObject();
+                procesarMensaje(mensajeRecibido);
             } catch (IOException ex) {
                 servidor.serverForm.escribirMensaje(ex.getMessage());
                 isRunning = false;
+                servidor.remover(this);
             } catch (ClassNotFoundException ex) {
                 servidor.serverForm.escribirMensaje(ex.getMessage());
             }
+        }
+    }
+    
+    private void procesarMensaje(Message mensaje) {
+        servidor.serverForm.escribirMensaje("Mensaje: " + mensaje.tipo + " de " + mensaje.emisor
+                + " para " + mensaje.receptor + " | " + mensaje.mensaje);
+        switch (mensaje.tipo) {
+            case REGISTRAR:
+                servidor.registrar(this, mensaje.emisor);
+                enviar(new Message("SERVIDOR", mensaje.emisor, "Conectado como " + mensaje.emisor, Message.Tipo.CONECTAR));
+                break;
+            case SUSCRIBIR:
+                servidor.suscribir(this, mensaje.datos != null ? mensaje.datos : mensaje.receptor);
+                break;
+            case NUEVA_SUBASTA:
+                servidor.suscribir(this, mensaje.receptor);
+                servidor.publicarTema(mensaje.receptor, mensaje);
+                break;
+            case NUEVA_OFERTA:
+            case UNIRSE_SUBASTA:
+            case OFERTA_ACEPTADA:
+            case SUBASTA_CERRADA:
+            case SUBASTA_CANCELADA:
+            case NUEVO_POST:
+            case NUEVO_SEGUIDOR:
+            case LIKE_POST:
+            case DISLIKE_POST:
+            case SUBIDA_NIVEL:
+            case LIKES_MILESTONE:
+            case FELICITACION:
+            case ARTISTA_BAJA:
+                servidor.publicarTema(mensaje.receptor, mensaje);
+                break;
+            case DESCONECTAR:
+                isRunning = false;
+                servidor.remover(this);
+                break;
+            default:
+                enviar(new Message("SERVIDOR", mensaje.emisor, "Tipo no soportado", Message.Tipo.ERROR));
+                break;
+        }
+    }
+    
+    public void enviar(Message mensaje) {
+        try {
+            writerStream.writeObject(mensaje);
+            writerStream.flush();
+        } catch (IOException ex) {
+            servidor.serverForm.escribirMensaje("Error enviando a " + nombre + ": " + ex.getMessage());
         }
     }
     

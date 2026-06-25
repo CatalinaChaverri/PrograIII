@@ -8,6 +8,7 @@ import Modelos.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -33,15 +34,13 @@ public class ThreadCliente extends Thread{
         }
     }
     
-    
     public void run (){
         Message mensajeRecibido;
         while(isRunning){
-            System.out.println("running");
             try {
                 mensajeRecibido = (Message)readerStream.readObject();
-                
-                System.out.println("Out if: " + mensajeRecibido);
+                Message finalMensaje = mensajeRecibido;
+                SwingUtilities.invokeLater(() -> cliente.recibirMensaje(finalMensaje));
                 
             } catch (IOException ex) {
                 System.out.println(ex.getMessage());

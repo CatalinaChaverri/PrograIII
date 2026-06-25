@@ -4,6 +4,8 @@
  */
 package Cliente;
 
+import APIComunicacion.MessageListener;
+import APIComunicacion.Observer;
 import Modelos.Message;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -21,12 +23,20 @@ public class Cliente {
     ClientForm pantalla;
     ThreadCliente threadCliente;
     private ObjectOutputStream writerStream;
+    private Observer listener;
     int counter = 0;
     
 
-    public Cliente(ClientForm pantalla) {
-        this.pantalla = pantalla;
+//    public Cliente(ClientForm pantalla) {
+//        this.pantalla = pantalla;
+//        this.connect();
+//    }
+    
+    public Cliente(String nombre, Observer listener) {
+        this.nombre = nombre;
+        this.listener = listener;
         this.connect();
+        registrar(nombre);
     }
     
     private void connect(){
@@ -45,11 +55,24 @@ public class Cliente {
     public void escribirMensaje(Message msg){
         try {
             writerStream.writeObject(msg);
+            writerStream.flush();
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
     }
     
+    public void registrar(String nombre) {
+        escribirMensaje(new Message(nombre, "SERVIDOR", "registrar", Message.Tipo.REGISTRAR));
+    }
     
+    public void suscribir(String tema) {
+        escribirMensaje(new Message(nombre, tema, "suscribir", Message.Tipo.SUSCRIBIR, tema));
+    }
+    
+    public void recibirMensaje(Message msg) {
+        if (listener != null) {
+            listener.update(msg);
+        }
+    }
     
 }

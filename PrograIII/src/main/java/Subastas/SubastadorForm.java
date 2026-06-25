@@ -1,46 +1,43 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Subastas;
 
-/**
- *
- * @author kiarabox
- */
+import Cliente.Cliente;
+import Modelos.Message;
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 public class SubastadorForm extends javax.swing.JFrame {
 
-    private Subastador subastador;
+    private final Subastador subastador;
     private Subasta subastaActual;
-    private DefaultListModel<String> modeloOfertas;
+    private final DefaultListModel<String> modeloOfertas;
+    private final List<Oferta> ofertasPendientes;
+    private Cliente cliente;
 
     public SubastadorForm(String nick) {
         this.subastador = new Subastador(nick);
+        this.modeloOfertas = new DefaultListModel<>();
+        this.ofertasPendientes = new ArrayList<>();
         initComponents();
         setTitle("Subastador: " + nick);
-        modeloOfertas = new DefaultListModel<>();
         lstOfertas.setModel(modeloOfertas);
+        cliente = new Cliente(nick, this::procesarMensaje);
         actualizarEstado();
     }
 
-    @SuppressWarnings("unchecked")
     private void initComponents() {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setLayout(null);
         setSize(600, 550);
-        setBackground(new Color(245, 245, 245));
 
         JLabel lblTitulo = new JLabel("PANEL SUBASTADOR", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
@@ -48,63 +45,42 @@ public class SubastadorForm extends javax.swing.JFrame {
         lblTitulo.setBounds(150, 10, 300, 35);
         add(lblTitulo);
 
-        JLabel lblNick = new JLabel("Nick: " + subastador.getNick(), SwingConstants.LEFT);
-        lblNick.setFont(new Font("Arial", Font.PLAIN, 13));
-        lblNick.setBounds(20, 50, 200, 25);
+        JLabel lblNick = new JLabel("Nick: " + subastador.getNick());
+        lblNick.setBounds(20, 50, 220, 25);
         add(lblNick);
 
-        // Crear subasta
-        JLabel lblCrear = new JLabel("--- Crear Subasta ---", SwingConstants.LEFT);
+        JLabel lblCrear = new JLabel("--- Crear Subasta ---");
         lblCrear.setFont(new Font("Arial", Font.BOLD, 13));
         lblCrear.setBounds(20, 85, 200, 25);
         add(lblCrear);
 
-        JLabel lblNombreP = new JLabel("Producto:");
-        lblNombreP.setBounds(20, 115, 100, 25);
-        add(lblNombreP);
-        txtNombreProducto = new JTextField();
-        txtNombreProducto.setBounds(120, 115, 150, 25);
-        add(txtNombreProducto);
+        addLabel("Producto:", 20, 115);
+        txtNombreProducto = field(120, 115, 150);
+        addLabel("Descripcion:", 20, 145);
+        txtDescProducto = field(120, 145, 150);
+        addLabel("Precio inicial:", 20, 175);
+        txtPrecioInicial = field(120, 175, 150);
+        addLabel("Nombre subasta:", 20, 205);
+        txtNombreSubasta = field(140, 205, 130);
 
-        JLabel lblDescP = new JLabel("Descripción:");
-        lblDescP.setBounds(20, 145, 100, 25);
-        add(lblDescP);
-        txtDescProducto = new JTextField();
-        txtDescProducto.setBounds(120, 145, 150, 25);
-        add(txtDescProducto);
-
-        JLabel lblPrecio = new JLabel("Precio inicial:");
-        lblPrecio.setBounds(20, 175, 100, 25);
-        add(lblPrecio);
-        txtPrecioInicial = new JTextField();
-        txtPrecioInicial.setBounds(120, 175, 150, 25);
-        add(txtPrecioInicial);
-
-        JLabel lblNombreS = new JLabel("Nombre subasta:");
-        lblNombreS.setBounds(20, 205, 120, 25);
-        add(lblNombreS);
-        txtNombreSubasta = new JTextField();
-        txtNombreSubasta.setBounds(140, 205, 130, 25);
-        add(txtNombreSubasta);
-
-        JButton btnCrear = new JButton("Crear Subasta");
-        btnCrear.setBounds(20, 240, 140, 35);
-        btnCrear.setBackground(new Color(50, 150, 50));
-        btnCrear.setForeground(Color.WHITE);
-        btnCrear.setFocusPainted(false);
-        btnCrear.setOpaque(true);
-        btnCrear.setBorderPainted(false);
+        JButton btnCrear = button("Crear Subasta", 20, 240, 140, new Color(50, 150, 50));
         btnCrear.addActionListener(e -> crearSubasta());
         add(btnCrear);
 
-        // Estado subasta actual
-        JLabel lblEstadoTit = new JLabel("--- Subasta Actual ---", SwingConstants.LEFT);
+        JButton btnCerrar = button("Cerrar Subasta", 20, 290, 140, new Color(200, 150, 0));
+        btnCerrar.addActionListener(e -> cerrarSubasta());
+        add(btnCerrar);
+
+        JButton btnCancelar = button("Cancelar Subasta", 20, 340, 140, new Color(200, 50, 50));
+        btnCancelar.addActionListener(e -> cancelarSubasta());
+        add(btnCancelar);
+
+        JLabel lblEstadoTit = new JLabel("--- Subasta Actual ---");
         lblEstadoTit.setFont(new Font("Arial", Font.BOLD, 13));
         lblEstadoTit.setBounds(300, 85, 200, 25);
         add(lblEstadoTit);
 
         lblEstadoSubasta = new JLabel("Sin subasta activa");
-        lblEstadoSubasta.setFont(new Font("Arial", Font.PLAIN, 12));
         lblEstadoSubasta.setBounds(300, 115, 270, 25);
         add(lblEstadoSubasta);
 
@@ -114,7 +90,6 @@ public class SubastadorForm extends javax.swing.JFrame {
         lblPrecioActual.setBounds(300, 145, 270, 25);
         add(lblPrecioActual);
 
-        // Lista de ofertas
         JLabel lblOfertasTit = new JLabel("Ofertas recibidas:");
         lblOfertasTit.setFont(new Font("Arial", Font.BOLD, 12));
         lblOfertasTit.setBounds(300, 175, 200, 25);
@@ -125,37 +100,9 @@ public class SubastadorForm extends javax.swing.JFrame {
         scrollOfertas.setBounds(300, 200, 270, 150);
         add(scrollOfertas);
 
-        // Botón aceptar oferta seleccionada
-        JButton btnAceptar = new JButton("Aceptar Oferta Seleccionada");
-        btnAceptar.setBounds(300, 360, 270, 35);
-        btnAceptar.setBackground(new Color(50, 100, 200));
-        btnAceptar.setForeground(Color.WHITE);
-        btnAceptar.setFocusPainted(false);
-        btnAceptar.setOpaque(true);
-        btnAceptar.setBorderPainted(false);
+        JButton btnAceptar = button("Aceptar Oferta Seleccionada", 300, 360, 270, new Color(50, 100, 200));
         btnAceptar.addActionListener(e -> aceptarOfertaSeleccionada());
         add(btnAceptar);
-
-        // Botones cerrar y cancelar
-        JButton btnCerrar = new JButton("Cerrar Subasta");
-        btnCerrar.setBounds(20, 290, 140, 35);
-        btnCerrar.setBackground(new Color(200, 150, 0));
-        btnCerrar.setForeground(Color.WHITE);
-        btnCerrar.setFocusPainted(false);
-        btnCerrar.setOpaque(true);
-        btnCerrar.setBorderPainted(false);
-        btnCerrar.addActionListener(e -> cerrarSubasta());
-        add(btnCerrar);
-
-        JButton btnCancelar = new JButton("Cancelar Subasta");
-        btnCancelar.setBounds(20, 340, 140, 35);
-        btnCancelar.setBackground(new Color(200, 50, 50));
-        btnCancelar.setForeground(Color.WHITE);
-        btnCancelar.setFocusPainted(false);
-        btnCancelar.setOpaque(true);
-        btnCancelar.setBorderPainted(false);
-        btnCancelar.addActionListener(e -> cancelarSubasta());
-        add(btnCancelar);
 
         lblMensaje = new JLabel("", SwingConstants.CENTER);
         lblMensaje.setFont(new Font("Arial", Font.BOLD, 13));
@@ -165,14 +112,12 @@ public class SubastadorForm extends javax.swing.JFrame {
 
     private void crearSubasta() {
         String nombreProducto = txtNombreProducto.getText().trim();
-        String descProducto   = txtDescProducto.getText().trim();
-        String nombreSubasta  = txtNombreSubasta.getText().trim();
-        String precioStr      = txtPrecioInicial.getText().trim();
+        String descProducto = txtDescProducto.getText().trim();
+        String nombreSubasta = txtNombreSubasta.getText().trim();
+        String precioStr = txtPrecioInicial.getText().trim();
 
-        if (nombreProducto.isEmpty() || descProducto.isEmpty() ||
-            nombreSubasta.isEmpty() || precioStr.isEmpty()) {
-            lblMensaje.setText("Completa todos los campos!");
-            lblMensaje.setForeground(Color.RED);
+        if (nombreProducto.isEmpty() || descProducto.isEmpty() || nombreSubasta.isEmpty() || precioStr.isEmpty()) {
+            mostrar("Completa todos los campos!", Color.RED);
             return;
         }
 
@@ -181,79 +126,89 @@ public class SubastadorForm extends javax.swing.JFrame {
             Producto producto = new Producto(nombreProducto, descProducto, "", precio);
             subastaActual = subastador.crearSubasta(nombreSubasta, "", "", producto);
             modeloOfertas.clear();
+            ofertasPendientes.clear();
+            cliente.suscribir(temaSubasta());
+            cliente.escribirMensaje(new Message(subastador.getNick(), temaSubasta(),
+                    "Nueva subasta: " + nombreSubasta, Message.Tipo.NUEVA_SUBASTA,
+                    nombreSubasta + "|" + nombreProducto + "|" + descProducto + "|" + precio));
             actualizarEstado();
-            lblMensaje.setText("Subasta '" + nombreSubasta + "' creada!");
-            lblMensaje.setForeground(new Color(0, 120, 0));
+            mostrar("Subasta '" + nombreSubasta + "' creada!", new Color(0, 120, 0));
         } catch (NumberFormatException e) {
-            lblMensaje.setText("El precio debe ser un número!");
-            lblMensaje.setForeground(Color.RED);
+            mostrar("El precio debe ser un numero!", Color.RED);
         }
     }
 
     private void aceptarOfertaSeleccionada() {
         if (subastaActual == null) {
-            lblMensaje.setText("No hay subasta activa!");
-            lblMensaje.setForeground(Color.RED);
+            mostrar("No hay subasta activa!", Color.RED);
             return;
         }
         int idx = lstOfertas.getSelectedIndex();
-        if (idx < 0) {
-            lblMensaje.setText("Selecciona una oferta de la lista!");
-            lblMensaje.setForeground(Color.RED);
+        if (idx < 0 || idx >= ofertasPendientes.size()) {
+            mostrar("Selecciona una oferta de la lista!", Color.RED);
             return;
         }
-        Oferta oferta = subastaActual.getOfertas().size() > 0 ?
-                        subastaActual.getOfertas().get(idx) : null;
-        if (oferta != null) {
-            boolean aceptada = subastador.aceptarOferta(subastaActual, oferta);
-            if (aceptada) {
-                actualizarEstado();
-                lblMensaje.setText("Oferta de $" + oferta.getMonto() + " aceptada!");
-                lblMensaje.setForeground(new Color(0, 120, 0));
-            } else {
-                lblMensaje.setText("No se pudo aceptar la oferta!");
-                lblMensaje.setForeground(Color.RED);
-            }
+        Oferta oferta = ofertasPendientes.get(idx);
+        if (subastador.aceptarOferta(subastaActual, oferta)) {
+            ofertasPendientes.remove(idx);
+            modeloOfertas.remove(idx);
+            cliente.escribirMensaje(new Message(subastador.getNick(), temaSubasta(),
+                    "Oferta aceptada", Message.Tipo.OFERTA_ACEPTADA,
+                    oferta.getOferente().getNick() + "|" + oferta.getMonto()));
+            actualizarEstado();
+            mostrar("Oferta de $" + oferta.getMonto() + " aceptada!", new Color(0, 120, 0));
+        } else {
+            mostrar("No se pudo aceptar la oferta!", Color.RED);
         }
     }
 
-    // Metodo para agregar oferta desde socket
-    public void recibirOferta(Oferta oferta) {
-        if (subastaActual != null) {
-            subastaActual.getOfertas().add(oferta);
-            modeloOfertas.addElement(oferta.getOferente().getNick() +
-                                     " — $" + oferta.getMonto());
-            actualizarEstado();
+    private void recibirOferta(Oferta oferta) {
+        if (subastaActual == null) {
+            return;
         }
+        ofertasPendientes.add(oferta);
+        modeloOfertas.addElement(oferta.getOferente().getNick() + " - $" + oferta.getMonto());
+        mostrar("Nueva oferta de " + oferta.getOferente().getNick(), new Color(0, 100, 200));
     }
 
     private void cerrarSubasta() {
         if (subastaActual == null) {
-            lblMensaje.setText("No hay subasta activa!");
-            lblMensaje.setForeground(Color.RED);
+            mostrar("No hay subasta activa!", Color.RED);
             return;
         }
         subastador.cerrarSubasta(subastaActual);
-        String msg = subastaActual.getGanador() != null ?
-            subastador.mensajeFelicitacion(subastaActual.getGanador(), subastaActual) :
-            "Subasta cerrada sin ganador.";
+        String msg = subastaActual.getGanador() != null
+                ? subastador.mensajeFelicitacion(subastaActual.getGanador(), subastaActual)
+                : "Subasta cerrada sin ganador.";
+        cliente.escribirMensaje(new Message(subastador.getNick(), temaSubasta(), msg,
+                Message.Tipo.SUBASTA_CERRADA,
+                (subastaActual.getGanador() != null ? subastaActual.getGanador().getNick() : "")
+                + "|" + subastaActual.getPrecioActual()));
         actualizarEstado();
-        JOptionPane.showMessageDialog(this, msg, "Subasta Cerrada",
-                                      JOptionPane.INFORMATION_MESSAGE);
-        lblMensaje.setText(msg);
-        lblMensaje.setForeground(new Color(0, 100, 200));
+        JOptionPane.showMessageDialog(this, msg, "Subasta Cerrada", JOptionPane.INFORMATION_MESSAGE);
+        mostrar(msg, new Color(0, 100, 200));
     }
 
     private void cancelarSubasta() {
         if (subastaActual == null) {
-            lblMensaje.setText("No hay subasta activa!");
-            lblMensaje.setForeground(Color.RED);
+            mostrar("No hay subasta activa!", Color.RED);
             return;
         }
         subastador.cancelarSubasta(subastaActual);
+        cliente.escribirMensaje(new Message(subastador.getNick(), temaSubasta(), "Subasta cancelada",
+                Message.Tipo.SUBASTA_CANCELADA));
         actualizarEstado();
-        lblMensaje.setText("Subasta cancelada.");
-        lblMensaje.setForeground(Color.RED);
+        mostrar("Subasta cancelada.", Color.RED);
+    }
+
+    private void procesarMensaje(Message mensaje) {
+        if (mensaje.tipo == Message.Tipo.NUEVA_OFERTA && subastaActual != null) {
+            try {
+                recibirOferta(new Oferta(Double.parseDouble(mensaje.datos), new Oferente(mensaje.emisor)));
+            } catch (NumberFormatException ex) {
+                mostrar("Oferta invalida recibida.", Color.RED);
+            }
+        }
     }
 
     private void actualizarEstado() {
@@ -261,13 +216,44 @@ public class SubastadorForm extends javax.swing.JFrame {
             lblEstadoSubasta.setText("Sin subasta activa");
             lblPrecioActual.setText("Precio actual: --");
         } else {
-            lblEstadoSubasta.setText(subastaActual.getNombre() +
-                                     " [" + subastaActual.getEstado() + "]");
+            lblEstadoSubasta.setText(subastaActual.getNombre() + " [" + subastaActual.getEstado() + "]");
             lblPrecioActual.setText("Precio actual: $" + subastaActual.getPrecioActual());
         }
     }
 
-    // Variables
+    private String temaSubasta() {
+        return "subasta:" + subastaActual.getNombre();
+    }
+
+    private void mostrar(String texto, Color color) {
+        lblMensaje.setText(texto);
+        lblMensaje.setForeground(color);
+    }
+
+    private void addLabel(String text, int x, int y) {
+        JLabel label = new JLabel(text);
+        label.setBounds(x, y, 120, 25);
+        add(label);
+    }
+
+    private JTextField field(int x, int y, int width) {
+        JTextField textField = new JTextField();
+        textField.setBounds(x, y, width, 25);
+        add(textField);
+        return textField;
+    }
+
+    private JButton button(String text, int x, int y, int width, Color color) {
+        JButton btn = new JButton(text);
+        btn.setBounds(x, y, width, 35);
+        btn.setBackground(color);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        return btn;
+    }
+
     private JTextField txtNombreProducto;
     private JTextField txtDescProducto;
     private JTextField txtPrecioInicial;

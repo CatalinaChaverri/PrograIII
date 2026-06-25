@@ -4,6 +4,10 @@
 
 package com.mycompany.prograiii;
 
+import Servidor.ServerForm;
+import Vistas.LoginForm;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author catac
@@ -11,6 +15,12 @@ package com.mycompany.prograiii;
 public class PrograIII {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SwingUtilities.invokeLater(() -> {
+            if (args.length > 0 && "server".equalsIgnoreCase(args[0])) {
+                new ServerForm().setVisible(true);
+            } else {
+                new LoginForm().setVisible(true);
+            }
+        });
     }
 }
