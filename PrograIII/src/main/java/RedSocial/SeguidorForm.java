@@ -166,18 +166,42 @@ public class SeguidorForm extends javax.swing.JFrame {
     }
 
     private void recibirPublicacion(Message mensaje) {
-        String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", 2) : new String[0];
-        if (partes.length < 2) {
-            return;
+    String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", 2) : new String[0];
+    if (partes.length < 2) {
+        return;
+    }
+    int indice = Integer.parseInt(partes[0]);
+    modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
+    temasFeed.add(temaArtista(mensaje.emisor));
+    indicesFeed.add(indice);
+
+    // Agregar artista a la lista si no esta, esto actualiza la lista de seguidores
+    if (!modeloArtistas.contains(mensaje.emisor)) {
+        modeloArtistas.addElement(mensaje.emisor);
+    }
+
+    // Actualizar contador de publicaciones del artista en la lista
+    // Buscar si el artista ya aparece y actualizar su entrada
+    for (int i = 0; i < modeloArtistas.size(); i++) {
+        String entrada = modeloArtistas.get(i);
+        String nombreArtista = entrada.contains(" (") ?
+                entrada.substring(0, entrada.indexOf(" (")) : entrada;
+        if (nombreArtista.equals(mensaje.emisor)) {
+            // Contar publicaciones de este artista en el feed
+            int totalPubs = 0;
+            for (int j = 0; j < temasFeed.size(); j++) {
+                if (temasFeed.get(j).equals(temaArtista(mensaje.emisor))) {
+                    totalPubs++;
+                }
+            }
+            modeloArtistas.set(i, mensaje.emisor + " (" + totalPubs + " publicaciones)");
+            break;
         }
-        int indice = Integer.parseInt(partes[0]);
-        modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
-        temasFeed.add(temaArtista(mensaje.emisor));
-        indicesFeed.add(indice);
-        if (!modeloArtistas.contains(mensaje.emisor)) {
-            modeloArtistas.addElement(mensaje.emisor);
-        }
-        lblNotificacion.setText("Nueva publicacion de " + mensaje.emisor + "!");
+    }
+
+    lblNotificacion.setText("Nueva publicacion de " + mensaje.emisor + "!");
+    lblMensaje.setText("Nueva publicacion de " + mensaje.emisor + "!");
+    lblMensaje.setForeground(new Color(0, 120, 0));
     }
 
     private void notificarSubidaNivel(String nombreArtista, String nivel) {
