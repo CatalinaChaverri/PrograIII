@@ -100,25 +100,19 @@ public class OferenteForm extends javax.swing.JFrame {
         add(lblGanador);
     }
 
-        private void unirseSubasta() {
+    private void unirseSubasta() {
         String nombre = txtSubasta.getText().trim();
         if (nombre.isEmpty()) {
             mostrar("Ingresa el nombre de la subasta!", Color.RED);
             return;
         }
-        // Primero suscribirse al tema
         subastaActual = nombre;
         cliente.suscribir(temaSubasta());
-
-        // Enviar mensaje pidiendo info de la subasta para validar que existe
         cliente.escribirMensaje(new Message(oferente.getNick(), temaSubasta(),
                 "Oferente unido", Message.Tipo.UNIRSE_SUBASTA));
-
-        // Mostrar mensaje de espera hasta recibir confirmacion del servidor
-        mostrar("Buscando subasta '" + nombre + "'...", new Color(0, 100, 200));
+        actualizarInfo();
+        mostrar("Te uniste a " + nombre, new Color(0, 120, 0));
     }
-
-
 
     private void hacerOferta() {
         if (subastaActual == null) {
@@ -173,19 +167,9 @@ public class OferenteForm extends javax.swing.JFrame {
         String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", -1) : new String[0];
         if (partes.length >= 4 && (subastaActual == null || partes[0].equals(subastaActual))) {
             subastaActual = partes[0];
-            precioActual  = Double.parseDouble(partes[3]);
-            estadoActual  = EstadoSubasta.ABIERTA;
+            precioActual = Double.parseDouble(partes[3]);
+            estadoActual = EstadoSubasta.ABIERTA;
             actualizarInfo();
-            // Mostrar precio inicial al unirse
-            mostrar("Te uniste a '" + subastaActual + "'! Precio inicial: $" + precioActual,
-                    new Color(0, 120, 0));
-        } else {
-            // La subasta no existe o no coincide
-            subastaActual = null;
-            mostrar("La subasta '" + txtSubasta.getText().trim() + "' no existe!", Color.RED);
-            lblInfoSubasta.setText("Sin subasta activa");
-            lblPrecioActual.setText("Precio actual: --");
-            lblEstado.setText("");
         }
     }
 
