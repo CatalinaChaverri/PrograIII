@@ -2,6 +2,7 @@ package RedSocial;
 
 import Cliente.Cliente;
 import Modelos.Message;
+import static Modelos.Message.Tipo.ACTUALIZAR_POST;
 import static Modelos.Message.Tipo.ARTISTA_BAJA;
 import static Modelos.Message.Tipo.LIKES_MILESTONE;
 import static Modelos.Message.Tipo.NUEVO_POST;
@@ -9,7 +10,9 @@ import static Modelos.Message.Tipo.SUBIDA_NIVEL;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -26,6 +29,7 @@ public class SeguidorForm extends javax.swing.JFrame {
     private final DefaultListModel<String> modeloArtistas;
     private final List<String> temasFeed;
     private final List<Integer> indicesFeed;
+    private final Set<String> artistasDadosDeBaja;
     private Cliente cliente;
 
     public SeguidorForm(String nombre) {
@@ -34,6 +38,7 @@ public class SeguidorForm extends javax.swing.JFrame {
         this.modeloArtistas = new DefaultListModel<>();
         this.temasFeed = new ArrayList<>();
         this.indicesFeed = new ArrayList<>();
+        this.artistasDadosDeBaja = new HashSet<>();
         initComponents();
         setTitle("Seguidor: " + nombre);
         lstFeed.setModel(modeloFeed);
@@ -115,6 +120,10 @@ public class SeguidorForm extends javax.swing.JFrame {
             mostrar("Ingresa el nombre del artista!", Color.RED);
             return;
         }
+        if (artistasDadosDeBaja.contains(artista)) {
+            mostrar("Ese artista se dio de baja y ya no esta disponible.", Color.RED);
+            return;
+        }
         String tema = temaArtista(artista);
         cliente.suscribir(tema);
         cliente.escribirMensaje(new Message(seguidor.getNombre(), tema,
@@ -156,8 +165,11 @@ public class SeguidorForm extends javax.swing.JFrame {
             case LIKES_MILESTONE:
                 notificarMilestoneLikes(mensaje.emisor, mensaje.datos);
                 break;
+            case ACTUALIZAR_POST:
+                actualizarPost(mensaje);
+                break;
             case ARTISTA_BAJA:
-                lblNotificacion.setText(mensaje.mensaje);
+                procesarBajaArtista(mensaje);
                 JOptionPane.showMessageDialog(this, mensaje.mensaje, "Notificacion", JOptionPane.INFORMATION_MESSAGE);
                 break;
             default:
@@ -198,10 +210,52 @@ public class SeguidorForm extends javax.swing.JFrame {
             break;
         }
     }
-
+    if (artistasDadosDeBaja.contains(mensaje.emisor)) {
+        return;
+    }
+    modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
+    temasFeed.add(temaArtista(mensaje.emisor));
+    indicesFeed.add(indice);
+    if (!modeloArtistas.contains(mensaje.emisor)) {
+        modeloArtistas.addElement(mensaje.emisor);
+    }
     lblNotificacion.setText("Nueva publicacion de " + mensaje.emisor + "!");
-    lblMensaje.setText("Nueva publicacion de " + mensaje.emisor + "!");
-    lblMensaje.setForeground(new Color(0, 120, 0));
+    }
+
+    private void actualizarPost(Message mensaje) {
+        String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", -1) : new String[0];
+        if (partes.length < 3) {
+            return;
+        }
+        int indice = parseEntero(partes[0], -1);
+        int likes = parseEntero(partes[1], 0);
+        int dislikes = parseEntero(partes[2], 0);
+        String tema = temaArtista(mensaje.emisor);
+        for (int i = 0; i < modeloFeed.size(); i++) {
+            if (tema.equals(temasFeed.get(i)) && indicesFeed.get(i) == indice) {
+                modeloFeed.set(i, reemplazarReacciones(modeloFeed.get(i), likes, dislikes));
+                return;
+            }
+        }
+    }
+
+    private String reemplazarReacciones(String publicacion, int likes, int dislikes) {
+        String textoBase = publicacion.split(" \\| Likes: ", 2)[0];
+        return textoBase + " | Likes: " + likes + " | Dislikes: " + dislikes;
+    }
+
+    private void procesarBajaArtista(Message mensaje) {
+        artistasDadosDeBaja.add(mensaje.emisor);
+        modeloArtistas.removeElement(mensaje.emisor);
+        String tema = temaArtista(mensaje.emisor);
+        for (int i = modeloFeed.size() - 1; i >= 0; i--) {
+            if (tema.equals(temasFeed.get(i))) {
+                modeloFeed.remove(i);
+                temasFeed.remove(i);
+                indicesFeed.remove(i);
+            }
+        }
+        lblNotificacion.setText(mensaje.mensaje);
     }
 
     private void notificarSubidaNivel(String nombreArtista, String nivel) {
@@ -219,6 +273,14 @@ public class SeguidorForm extends javax.swing.JFrame {
 
     private String temaArtista(String artista) {
         return "artista:" + artista;
+    }
+
+    private int parseEntero(String valor, int valorPorDefecto) {
+        try {
+            return Integer.parseInt(valor);
+        } catch (NumberFormatException ex) {
+            return valorPorDefecto;
+        }
     }
 
     private void mostrar(String texto, Color color) {

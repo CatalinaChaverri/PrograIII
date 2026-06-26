@@ -6,6 +6,7 @@ package Servidor;
 
 import Modelos.Message;
 import static Modelos.Message.Tipo.ARTISTA_BAJA;
+import static Modelos.Message.Tipo.ACTUALIZAR_POST;
 import static Modelos.Message.Tipo.DESCONECTAR;
 import static Modelos.Message.Tipo.DISLIKE_POST;
 import static Modelos.Message.Tipo.FELICITACION;
@@ -95,6 +96,7 @@ public class ThreadServidor extends Thread{
             case NUEVO_SEGUIDOR:
             case LIKE_POST:
             case DISLIKE_POST:
+            case ACTUALIZAR_POST:
             case SUBIDA_NIVEL:
             case LIKES_MILESTONE:
             case FELICITACION:

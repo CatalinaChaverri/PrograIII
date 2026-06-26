@@ -1,5 +1,4 @@
 APIComunicacion\Observer.class
-APIComunicacion\ObserverRemoto.class
 RedSocial\SeguidorForm.class
 Servidor\ServerForm.class
 Servidor\ThreadConexiones.class
@@ -25,7 +24,6 @@ Vistas\LoginForm.class
 Modelos\Message.class
 RedSocial\ArtistaForm.class
 RedSocial\SeguidorForm$1.class
-Cliente\ClientForm.class
 Subastas\EstadoSubasta.class
 Cliente\ThreadCliente.class
 Servidor\ThreadServidor.class

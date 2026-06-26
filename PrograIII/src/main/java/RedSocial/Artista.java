@@ -53,8 +53,10 @@ public class Artista implements Observable {
     public boolean darLikeAPublicacion(Publicacion pub) {
         pub.darLike();
         boolean milestone = pub.getLikes() % 10 == 0;
+        int indice = publicaciones.indexOf(pub);
+        notifyObservers(new Message(nombre, temaArtista(), "", 
+                Message.Tipo.ACTUALIZAR_POST, datosPublicacion(indice, pub)));
         if (milestone) {
-            int indice = publicaciones.indexOf(pub);
             notifyObservers(new Message(nombre, temaArtista(),
                     "La publicacion de " + nombre + " llego a " + pub.getLikes() + " likes!",
                     Message.Tipo.LIKES_MILESTONE, indice + "|" + pub.getLikes()));
@@ -64,7 +66,15 @@ public class Artista implements Observable {
 
     public boolean darDislikeAPublicacion(Publicacion pub) {
         pub.darDislike();
+        notifyObservers(new Message(nombre, temaArtista(), "", 
+                Message.Tipo.ACTUALIZAR_POST, 
+                datosPublicacion(publicaciones.indexOf(pub), pub)));
         return pub.getDislikes() % 10 == 0;
+    }
+
+    public void eliminarSeguidores() {
+        seguidores.clear();
+        observadores.clear();
     }
 
     public String getNombre()                   { return nombre; }
@@ -92,5 +102,9 @@ public class Artista implements Observable {
 
     private String temaArtista() {
         return "artista:" + nombre;
+    }
+
+    private String datosPublicacion(int indice, Publicacion pub) {
+        return indice + "|" + pub.getLikes() + "|" + pub.getDislikes();
     }
 }

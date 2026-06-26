@@ -19,17 +19,10 @@ public class Cliente {
     private final String IP = "localhost";
     String nombre;
     Socket socket;
-    ClientForm pantalla;
     ThreadCliente threadCliente;
     private ObjectOutputStream writerStream;
     private MessageListener listener;
     int counter = 0;
-    
-
-    public Cliente(ClientForm pantalla) {
-        this.pantalla = pantalla;
-        this.connect();
-    }
     
     public Cliente(String nombre, MessageListener listener) {
         this.nombre = nombre;
