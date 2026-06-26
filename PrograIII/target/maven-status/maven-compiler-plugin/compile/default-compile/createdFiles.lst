@@ -24,6 +24,7 @@ Vistas\LoginForm.class
 Modelos\Message.class
 RedSocial\ArtistaForm.class
 RedSocial\SeguidorForm$1.class
+Servidor\Servidor$ClientesTema.class
 Subastas\EstadoSubasta.class
 Cliente\ThreadCliente.class
 Servidor\ThreadServidor.class

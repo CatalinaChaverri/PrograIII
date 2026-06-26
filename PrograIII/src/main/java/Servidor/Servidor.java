@@ -8,10 +8,6 @@ import Modelos.Message;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -25,7 +21,7 @@ public class Servidor {
     //TODO
     //arrayList de clientes conectados: ThreadServidor
     ArrayList<ThreadServidor> connectClientsThreads = new ArrayList<ThreadServidor>();
-    private final Map<String, Set<ThreadServidor>> clientesPorTema = new HashMap<>();
+    private final ArrayList<ClientesTema> clientesPorTema = new ArrayList<>();
     
     public Servidor(ServerForm serverForm){
         this.serverForm = serverForm;
@@ -50,7 +46,7 @@ public class Servidor {
         }
     }
     
-    public synchronized void registrar(ThreadServidor cliente, String nombre) {
+    public void registrar(ThreadServidor cliente, String nombre) {
         cliente.setNombre(nombre);
         if (!connectClientsThreads.contains(cliente)) {
             connectClientsThreads.add(cliente);
@@ -58,25 +54,30 @@ public class Servidor {
         serverForm.escribirMensaje("Cliente registrado: " + nombre);
     }
     
-    public synchronized void suscribir(ThreadServidor cliente, String tema) {
-        clientesPorTema.computeIfAbsent(tema, k -> new HashSet<>()).add(cliente);
+    public void suscribir(ThreadServidor cliente, String tema) {
+        ClientesTema clientesTema = obtenerClientesTema(tema);
+        if (clientesTema == null) {
+            clientesTema = new ClientesTema(tema);
+            clientesPorTema.add(clientesTema);
+        }
+        clientesTema.agregarCliente(cliente);
         serverForm.escribirMensaje(cliente.getNombre() + " observa " + tema);
     }
     
-    public synchronized void publicarTema(String tema, Message msg) {
-        Set<ThreadServidor> clientesTema = clientesPorTema.get(tema);
-        if (clientesTema == null || clientesTema.isEmpty()) {
+    public void publicarTema(String tema, Message msg) {
+        ClientesTema clientesTema = obtenerClientesTema(tema);
+        if (clientesTema == null || clientesTema.clientes.isEmpty()) {
             return;
         }
-        for (ThreadServidor cliente : new HashSet<>(clientesTema)) {
+        for (ThreadServidor cliente : new ArrayList<>(clientesTema.clientes)) {
             cliente.enviar(msg);
         }
     }
     
-    public synchronized void remover(ThreadServidor cliente) {
+    public void remover(ThreadServidor cliente) {
         connectClientsThreads.remove(cliente);
-        for (Set<ThreadServidor> clientesTema : clientesPorTema.values()) {
-            clientesTema.remove(cliente);
+        for (ClientesTema clientesTema : clientesPorTema) {
+            clientesTema.removerCliente(cliente);
         }
     }
     
@@ -91,6 +92,34 @@ public class Servidor {
             } catch (IOException ex) {
                 serverForm.escribirMensaje("Error levantando el server: "+ex.getMessage());
             }
+        }
+    }
+
+    private ClientesTema obtenerClientesTema(String tema) {
+        for (ClientesTema clientesTema : clientesPorTema) {
+            if (clientesTema.tema.equals(tema)) {
+                return clientesTema;
+            }
+        }
+        return null;
+    }
+
+    private static class ClientesTema {
+        private final String tema;
+        private final ArrayList<ThreadServidor> clientes = new ArrayList<>();
+
+        private ClientesTema(String tema) {
+            this.tema = tema;
+        }
+
+        private void agregarCliente(ThreadServidor cliente) {
+            if (!clientes.contains(cliente)) {
+                clientes.add(cliente);
+            }
+        }
+
+        private void removerCliente(ThreadServidor cliente) {
+            clientes.remove(cliente);
         }
     }
 }
