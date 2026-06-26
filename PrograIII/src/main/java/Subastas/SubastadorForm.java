@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 
 public class SubastadorForm extends javax.swing.JFrame {
 
@@ -22,6 +23,9 @@ public class SubastadorForm extends javax.swing.JFrame {
     private final DefaultListModel<String> modeloOfertas;
     private final List<Oferta> ofertasPendientes;
     private Cliente cliente;
+    private Timer timerSubasta;
+    private int segundosRestantes;
+    private JLabel lblTimer;
 
     public SubastadorForm(String nick) {
         this.subastador = new Subastador(nick);
@@ -89,6 +93,12 @@ public class SubastadorForm extends javax.swing.JFrame {
         lblPrecioActual.setForeground(new Color(0, 100, 0));
         lblPrecioActual.setBounds(300, 145, 270, 25);
         add(lblPrecioActual);
+        
+        lblTimer = new JLabel("Tiempo restante: --", SwingConstants.LEFT);
+        lblTimer.setFont(new Font("Arial", Font.BOLD, 13));
+        lblTimer.setForeground(new Color(180, 80, 0));
+        lblTimer.setBounds(300, 170, 270, 25);
+        add(lblTimer);
 
         JLabel lblOfertasTit = new JLabel("Ofertas recibidas:");
         lblOfertasTit.setFont(new Font("Arial", Font.BOLD, 12));
@@ -133,6 +143,7 @@ public class SubastadorForm extends javax.swing.JFrame {
                     nombreSubasta + "|" + nombreProducto + "|" + descProducto + "|" + precio));
             actualizarEstado();
             mostrar("Subasta '" + nombreSubasta + "' creada!", new Color(0, 120, 0));
+            iniciarTimer(60);
         } catch (NumberFormatException e) {
             mostrar("El precio debe ser un numero!", Color.RED);
         }
@@ -219,6 +230,33 @@ public class SubastadorForm extends javax.swing.JFrame {
             lblEstadoSubasta.setText(subastaActual.getNombre() + " [" + subastaActual.getEstado() + "]");
             lblPrecioActual.setText("Precio actual: $" + subastaActual.getPrecioActual());
         }
+    }
+    
+    private void iniciarTimer(int segundos) {
+    if (timerSubasta != null && timerSubasta.isRunning()) {
+        timerSubasta.stop();
+    }
+    segundosRestantes = segundos;
+    lblTimer.setForeground(new Color(180, 80, 0));
+    lblTimer.setText("Tiempo restante: " + segundosRestantes + "s");
+
+    timerSubasta = new Timer(1000, e -> {
+        segundosRestantes--;
+        lblTimer.setText("Tiempo restante: " + segundosRestantes + "s");
+
+        if (segundosRestantes <= 10) {
+            lblTimer.setForeground(Color.RED);
+        }
+        if (segundosRestantes <= 0) {
+            timerSubasta.stop();
+            lblTimer.setText("Tiempo agotado!");
+            // Cerrar subasta automaticamente
+            if (subastaActual != null && subastaActual.getEstado() == EstadoSubasta.ABIERTA) {
+                cerrarSubasta();
+            }
+        }
+    });
+    timerSubasta.start();
     }
 
     private String temaSubasta() {
