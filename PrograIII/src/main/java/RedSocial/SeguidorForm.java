@@ -128,7 +128,7 @@ public class SeguidorForm extends javax.swing.JFrame {
         cliente.suscribir(tema);
         cliente.escribirMensaje(new Message(seguidor.getNombre(), tema,
                 "Nuevo seguidor", Message.Tipo.NUEVO_SEGUIDOR));
-        if (!modeloArtistas.contains(artista)) {
+        if (!existeArtistaEnLista(artista)) {
             modeloArtistas.addElement(artista);
         }
         txtArtista.setText("");
@@ -178,48 +178,39 @@ public class SeguidorForm extends javax.swing.JFrame {
     }
 
     private void recibirPublicacion(Message mensaje) {
-    String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", 2) : new String[0];
-    if (partes.length < 2) {
-        return;
-    }
-    int indice = Integer.parseInt(partes[0]);
-    modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
-    temasFeed.add(temaArtista(mensaje.emisor));
-    indicesFeed.add(indice);
-
-    // Agregar artista a la lista si no esta, esto actualiza la lista de seguidores
-    if (!modeloArtistas.contains(mensaje.emisor)) {
-        modeloArtistas.addElement(mensaje.emisor);
-    }
-
-    // Actualizar contador de publicaciones del artista en la lista
-    // Buscar si el artista ya aparece y actualizar su entrada
-    for (int i = 0; i < modeloArtistas.size(); i++) {
-        String entrada = modeloArtistas.get(i);
-        String nombreArtista = entrada.contains(" (") ?
-                entrada.substring(0, entrada.indexOf(" (")) : entrada;
-        if (nombreArtista.equals(mensaje.emisor)) {
-            // Contar publicaciones de este artista en el feed
-            int totalPubs = 0;
-            for (int j = 0; j < temasFeed.size(); j++) {
-                if (temasFeed.get(j).equals(temaArtista(mensaje.emisor))) {
-                    totalPubs++;
-                }
-            }
-            modeloArtistas.set(i, mensaje.emisor + " (" + totalPubs + " publicaciones)");
-            break;
+        String[] partes = mensaje.datos != null ? mensaje.datos.split("\\|", 2) : new String[0];
+        if (partes.length < 2 || artistasDadosDeBaja.contains(mensaje.emisor)) {
+            return;
         }
+
+        int indice = parseEntero(partes[0], -1);
+        if (indice < 0) {
+            return;
+        }
+
+        modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
+        temasFeed.add(temaArtista(mensaje.emisor));
+        indicesFeed.add(indice);
+        actualizarArtistaConContador(mensaje.emisor);
+        lblNotificacion.setText("Nueva publicacion de " + mensaje.emisor + "!");
     }
-    if (artistasDadosDeBaja.contains(mensaje.emisor)) {
-        return;
-    }
-    modeloFeed.addElement("[" + mensaje.emisor + "] " + partes[1] + " | Likes: 0 | Dislikes: 0");
-    temasFeed.add(temaArtista(mensaje.emisor));
-    indicesFeed.add(indice);
-    if (!modeloArtistas.contains(mensaje.emisor)) {
-        modeloArtistas.addElement(mensaje.emisor);
-    }
-    lblNotificacion.setText("Nueva publicacion de " + mensaje.emisor + "!");
+
+    private void actualizarArtistaConContador(String artista) {
+        int totalPubs = 0;
+        for (String tema : temasFeed) {
+            if (tema.equals(temaArtista(artista))) {
+                totalPubs++;
+            }
+        }
+
+        String texto = artista + " (" + totalPubs + " publicaciones)";
+        for (int i = 0; i < modeloArtistas.size(); i++) {
+            if (obtenerNombreArtista(modeloArtistas.get(i)).equals(artista)) {
+                modeloArtistas.set(i, texto);
+                return;
+            }
+        }
+        modeloArtistas.addElement(texto);
     }
 
     private void actualizarPost(Message mensaje) {
@@ -246,7 +237,7 @@ public class SeguidorForm extends javax.swing.JFrame {
 
     private void procesarBajaArtista(Message mensaje) {
         artistasDadosDeBaja.add(mensaje.emisor);
-        modeloArtistas.removeElement(mensaje.emisor);
+        eliminarArtistaDeLista(mensaje.emisor);
         String tema = temaArtista(mensaje.emisor);
         for (int i = modeloFeed.size() - 1; i >= 0; i--) {
             if (tema.equals(temasFeed.get(i))) {
@@ -256,6 +247,23 @@ public class SeguidorForm extends javax.swing.JFrame {
             }
         }
         lblNotificacion.setText(mensaje.mensaje);
+    }
+
+    private void eliminarArtistaDeLista(String artista) {
+        for (int i = modeloArtistas.size() - 1; i >= 0; i--) {
+            if (obtenerNombreArtista(modeloArtistas.get(i)).equals(artista)) {
+                modeloArtistas.remove(i);
+            }
+        }
+    }
+
+    private boolean existeArtistaEnLista(String artista) {
+        for (int i = 0; i < modeloArtistas.size(); i++) {
+            if (obtenerNombreArtista(modeloArtistas.get(i)).equals(artista)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void notificarSubidaNivel(String nombreArtista, String nivel) {
@@ -273,6 +281,10 @@ public class SeguidorForm extends javax.swing.JFrame {
 
     private String temaArtista(String artista) {
         return "artista:" + artista;
+    }
+
+    private String obtenerNombreArtista(String entrada) {
+        return entrada.contains(" (") ? entrada.substring(0, entrada.indexOf(" (")) : entrada;
     }
 
     private int parseEntero(String valor, int valorPorDefecto) {
