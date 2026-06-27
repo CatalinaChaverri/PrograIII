@@ -4,8 +4,10 @@ import Cliente.Cliente;
 import Modelos.Message;
 import static Modelos.Message.Tipo.ACTUALIZAR_POST;
 import static Modelos.Message.Tipo.ARTISTA_BAJA;
+import static Modelos.Message.Tipo.ERROR;
 import static Modelos.Message.Tipo.LIKES_MILESTONE;
 import static Modelos.Message.Tipo.NUEVO_POST;
+import static Modelos.Message.Tipo.SEGUIDOR_ACEPTADO;
 import static Modelos.Message.Tipo.SUBIDA_NIVEL;
 import java.awt.Color;
 import java.awt.Font;
@@ -128,11 +130,6 @@ public class SeguidorForm extends javax.swing.JFrame {
         cliente.suscribir(tema);
         cliente.escribirMensaje(new Message(seguidor.getNombre(), tema,
                 "Nuevo seguidor", Message.Tipo.NUEVO_SEGUIDOR));
-        if (!existeArtistaEnLista(artista)) {
-            modeloArtistas.addElement(artista);
-        }
-        txtArtista.setText("");
-        mostrar("Ahora seguis a " + artista, new Color(0, 120, 0));
     }
 
     private void darLike() {
@@ -172,9 +169,25 @@ public class SeguidorForm extends javax.swing.JFrame {
                 procesarBajaArtista(mensaje);
                 JOptionPane.showMessageDialog(this, mensaje.mensaje, "Notificacion", JOptionPane.INFORMATION_MESSAGE);
                 break;
+            case SEGUIDOR_ACEPTADO:
+                confirmarSeguimiento(mensaje.emisor);
+                break;
+            case ERROR:
+                mostrar(mensaje.mensaje, Color.RED);
+                JOptionPane.showMessageDialog(this, mensaje.mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+                break;
             default:
                 break;
         }
+    }
+    
+    private void confirmarSeguimiento(String artista){
+        cliente.suscribir(temaArtista(artista));
+        if(!modeloArtistas.contains(artista)){
+            modeloArtistas.addElement(artista);
+        }
+        txtArtista.setText("");
+        mostrar("Ahora seguis a " + artista, new Color(0, 120, 0));
     }
 
     private void recibirPublicacion(Message mensaje) {

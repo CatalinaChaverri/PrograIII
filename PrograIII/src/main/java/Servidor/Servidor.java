@@ -64,14 +64,15 @@ public class Servidor {
         serverForm.escribirMensaje(cliente.getNombre() + " observa " + tema);
     }
     
-    public void publicarTema(String tema, Message msg) {
+    public boolean publicarTema(String tema, Message msg) {
         ClientesTema clientesTema = obtenerClientesTema(tema);
         if (clientesTema == null || clientesTema.clientes.isEmpty()) {
-            return;
+            return false;
         }
         for (ThreadServidor cliente : new ArrayList<>(clientesTema.clientes)) {
             cliente.enviar(msg);
         }
+        return true;
     }
     
     public void remover(ThreadServidor cliente) {

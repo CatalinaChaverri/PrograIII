@@ -163,6 +163,8 @@ public class ArtistaForm extends javax.swing.JFrame {
         }
         boolean subioNivel = artista.agregarSeguidor(new Seguidor(nombre));
         modeloSeguidores.addElement(nombre);
+        cliente.escribirMensaje(new Message(artista.getNombre(), nombre,
+                "Ahora seguis a " + artista.getNombre(), Message.Tipo.SEGUIDOR_ACEPTADO));
         actualizarInfo();
         if (subioNivel) {
             String msg = artista.getNombre() + " subio al nivel " + artista.getNivel()

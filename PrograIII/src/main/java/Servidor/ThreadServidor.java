@@ -87,13 +87,21 @@ public class ThreadServidor extends Thread{
                 servidor.suscribir(this, mensaje.receptor);
                 servidor.publicarTema(mensaje.receptor, mensaje);
                 break;
+            case NUEVO_SEGUIDOR:
+                if(!servidor.publicarTema(mensaje.receptor, mensaje)){
+                    enviar(new Message("SERVIDOR", mensaje.emisor, "No existe el artista:" + 
+                            nombreDesdeTema(mensaje.receptor), Message.Tipo.ERROR));
+                }
+                break;
+            case SEGUIDOR_ACEPTADO:
+                servidor.sendPrivateMessage(mensaje);
+                break;
             case NUEVA_OFERTA:
             case UNIRSE_SUBASTA:
             case OFERTA_ACEPTADA:
             case SUBASTA_CERRADA:
             case SUBASTA_CANCELADA:
             case NUEVO_POST:
-            case NUEVO_SEGUIDOR:
             case LIKE_POST:
             case DISLIKE_POST:
             case ACTUALIZAR_POST:
@@ -111,6 +119,13 @@ public class ThreadServidor extends Thread{
                 enviar(new Message("SERVIDOR", mensaje.emisor, "Tipo no soportado", Message.Tipo.ERROR));
                 break;
         }
+    }
+    
+    private String nombreDesdeTema(String tema){
+        if(tema == null){
+            return "";
+        }
+        return tema.startsWith("artista:")? tema.substring("artista:".length()):tema;
     }
     
     public void enviar(Message mensaje) {

@@ -196,6 +196,7 @@ public class SubastadorForm extends javax.swing.JFrame {
                 (subastaActual.getGanador() != null ? subastaActual.getGanador().getNick() : "")
                 + "|" + subastaActual.getPrecioActual()));
         actualizarEstado();
+        detenerTimerSubasta();
         JOptionPane.showMessageDialog(this, msg, "Subasta Cerrada", JOptionPane.INFORMATION_MESSAGE);
         mostrar(msg, new Color(0, 100, 200));
     }
@@ -209,6 +210,7 @@ public class SubastadorForm extends javax.swing.JFrame {
         cliente.escribirMensaje(new Message(subastador.getNick(), temaSubasta(), "Subasta cancelada",
                 Message.Tipo.SUBASTA_CANCELADA));
         actualizarEstado();
+        detenerTimerSubasta();
         mostrar("Subasta cancelada.", Color.RED);
     }
 
@@ -233,30 +235,34 @@ public class SubastadorForm extends javax.swing.JFrame {
     }
     
     private void iniciarTimer(int segundos) {
-    if (timerSubasta != null && timerSubasta.isRunning()) {
-        timerSubasta.stop();
-    }
-    segundosRestantes = segundos;
-    lblTimer.setForeground(new Color(180, 80, 0));
-    lblTimer.setText("Tiempo restante: " + segundosRestantes + "s");
-
-    timerSubasta = new Timer(1000, e -> {
-        segundosRestantes--;
+        if (timerSubasta != null && timerSubasta.isRunning()) {
+            timerSubasta.stop();
+        }
+        segundosRestantes = segundos;
+        lblTimer.setForeground(new Color(180, 80, 0));
         lblTimer.setText("Tiempo restante: " + segundosRestantes + "s");
 
-        if (segundosRestantes <= 10) {
-            lblTimer.setForeground(Color.RED);
-        }
-        if (segundosRestantes <= 0) {
-            timerSubasta.stop();
-            lblTimer.setText("Tiempo agotado!");
-            // Cerrar subasta automaticamente
-            if (subastaActual != null && subastaActual.getEstado() == EstadoSubasta.ABIERTA) {
-                cerrarSubasta();
+        timerSubasta = new Timer(1000, e -> {
+            segundosRestantes--;
+            lblTimer.setText("Tiempo restante: " + segundosRestantes + "s");
+
+            if (segundosRestantes <= 10) {
+                lblTimer.setForeground(Color.RED);
             }
-        }
-    });
-    timerSubasta.start();
+            if (segundosRestantes <= 0) {
+                timerSubasta.stop();
+                lblTimer.setText("Tiempo agotado!");
+                // Cerrar subasta automaticamente
+                if (subastaActual != null && subastaActual.getEstado() == EstadoSubasta.ABIERTA) {
+                    cerrarSubasta();
+                }
+            }
+        });
+        timerSubasta.start();
+    }
+    
+    public void detenerTimerSubasta(){
+        timerSubasta.stop();
     }
 
     private String temaSubasta() {
