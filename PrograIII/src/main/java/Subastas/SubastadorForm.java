@@ -97,7 +97,7 @@ public class SubastadorForm extends javax.swing.JFrame {
         lblTimer = new JLabel("Tiempo restante: --", SwingConstants.LEFT);
         lblTimer.setFont(new Font("Arial", Font.BOLD, 13));
         lblTimer.setForeground(new Color(180, 80, 0));
-        lblTimer.setBounds(300, 170, 270, 25);
+        lblTimer.setBounds(300, 160, 270, 25);
         add(lblTimer);
 
         JLabel lblOfertasTit = new JLabel("Ofertas recibidas:");
