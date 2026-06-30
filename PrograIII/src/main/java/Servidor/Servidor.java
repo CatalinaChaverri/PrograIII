@@ -105,9 +105,9 @@ public class Servidor {
         return null;
     }
 
-    private static class ClientesTema {
-        private final String tema;
-        private final ArrayList<ThreadServidor> clientes = new ArrayList<>();
+    private class ClientesTema {
+        private String tema;
+        private ArrayList<ThreadServidor> clientes = new ArrayList<>();
 
         private ClientesTema(String tema) {
             this.tema = tema;
